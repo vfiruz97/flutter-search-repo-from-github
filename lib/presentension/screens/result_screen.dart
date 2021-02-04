@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:search_from_github_repo/data/models/arg.dart';
+import 'package:search_from_github_repo/data/models/repo.dart';
+import 'package:search_from_github_repo/logic/bloc/search_repo_bloc/search_repo_bloc.dart';
 
 class ResultScreen extends StatefulWidget {
   final Arguments arguments;
@@ -11,6 +14,14 @@ class ResultScreen extends StatefulWidget {
 
 class _ResultScreenState extends State<ResultScreen> {
   @override
+  void initState() {
+    super.initState();
+    context
+        .read<SearchRepoBloc>()
+        .add(SearchRepoFetchEvent(searchText: widget.arguments.searchText));
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -19,24 +30,49 @@ class _ResultScreenState extends State<ResultScreen> {
         automaticallyImplyLeading: false,
         elevation: 1.0,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            titleWidget(),
-            SizedBox(
-              height: 15.0,
-            ),
-            cardWidget(),
-            cardWidget(),
-            cardWidget(),
-          ],
-        ),
-      ),
+      body: _body(),
     );
   }
 
-  Container titleWidget() {
+  _body() {
+    return BlocBuilder<SearchRepoBloc, SearchRepoState>(
+      builder: (context, state) {
+        if (state is SearchRepoLoading) {
+          return Center(child: CircularProgressIndicator());
+        }
+
+        if (state is SearchRepoEmpty) {
+          return Center(child: Text("Ничего не нашли!"));
+        }
+
+        if (state is SearchRepoLoaded) {
+          print(state.repos[0].updatedAt);
+          
+
+          return SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _titleWidget(state.repos.length),
+                SizedBox(
+                  height: 15.0,
+                ),
+                for (Repository repo in state.repos) _cardWidget(repo),
+              ],
+            ),
+          );
+        }
+
+        if (state is SearchRepoError) {
+          return Center(child: Text("Произашло ошибка!"));
+        }
+
+        return Center(child: Text("Произашло ошибка!"));
+      },
+    );
+  }
+
+  Container _titleWidget(countItem) {
     return Container(
       margin: const EdgeInsets.only(top: 30.0),
       alignment: Alignment.center,
@@ -56,7 +92,7 @@ class _ResultScreenState extends State<ResultScreen> {
               ),
             ),
             TextSpan(
-              text: '\nНАЙДЕНО: 54',
+              text: '\nНАЙДЕНО: $countItem',
               style: TextStyle(
                 height: 2.0,
               ),
@@ -67,7 +103,7 @@ class _ResultScreenState extends State<ResultScreen> {
     );
   }
 
-  Container cardWidget() {
+  Container _cardWidget(repo) {
     return Container(
       margin: const EdgeInsets.all(10.0),
       padding: const EdgeInsets.all(15.0),
@@ -81,7 +117,7 @@ class _ResultScreenState extends State<ResultScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "Название репозитория",
+                "${repo.name}",
                 style: TextStyle(
                   fontWeight: FontWeight.w500,
                 ),
@@ -101,7 +137,7 @@ class _ResultScreenState extends State<ResultScreen> {
                       size: 14.0,
                     ),
                     Text(
-                      "67",
+                      "${repo.stargazersCount}",
                       style: TextStyle(
                         color: Colors.white,
                       ),
@@ -115,14 +151,13 @@ class _ResultScreenState extends State<ResultScreen> {
             children: [
               CircleAvatar(
                 radius: 20.0,
-                backgroundImage: NetworkImage(
-                    "https://images.unsplash.com/photo-1547721064-da6cfb341d50"),
+                backgroundImage: NetworkImage("${repo.avatarUrl}"),
               ),
               SizedBox(
                 width: 5.0,
               ),
               Text(
-                "Username",
+                "${repo.login}",
                 style: TextStyle(
                   fontWeight: FontWeight.w500,
                 ),
@@ -141,7 +176,7 @@ class _ResultScreenState extends State<ResultScreen> {
                 ),
               ),
               Text(
-                "3 января",
+                "${repo.updatedAt}",
                 style: TextStyle(
                   fontWeight: FontWeight.w500,
                 ),

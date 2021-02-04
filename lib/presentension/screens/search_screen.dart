@@ -32,15 +32,15 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
         child: Row(
           children: <Widget>[
-            textField(),
-            searchBtn(),
+            _textField(),
+            _searchBtn(),
           ],
         ),
       ),
     );
   }
 
-  Widget textField() {
+  Widget _textField() {
     return Expanded(
       child: TextFormField(
         initialValue: search,
@@ -61,7 +61,7 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget searchBtn() {
+  Widget _searchBtn() {
     return FlatButton(
       height: 44.0,
       minWidth: 100.0,
